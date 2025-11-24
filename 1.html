@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Astra RP — Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js" />
+  <style>
+    :root{--bg:#0f172a;--card:#0f172a;--muted:#9aa6bf;--accent:#7c3aed;--glass:rgba(255,255,255,0.04)}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,ui-sans-serif,system-ui,Arial;background:var(--bg);color:#e6eef8; -webkit-font-smoothing:antialiased}
+
+    /* NAV */
+    .nav{display:flex;gap:12px;align-items:center;padding:14px 20px;background:linear-gradient(180deg,#0b1220, #0f172a);border-bottom:1px solid rgba(255,255,255,0.03);position:sticky;top:0;z-index:40}
+    .nav .brand{font-weight:700;color:var(--accent);letter-spacing:0.6px}
+    .nav a{color:var(--muted);text-decoration:none;padding:8px 12px;border-radius:8px;transition:all .18s ease}
+    .nav a.active,.nav a:hover{background:rgba(124,58,237,0.12);color:#fff;box-shadow:0 6px 20px rgba(124,58,237,0.08)}
+
+    .container{max-width:1200px;margin:28px auto;padding:20px}
+    h1{margin:0 0 16px;color:var(--accent);font-size:28px}
+    h2{color:#cbd5e1;margin:0 0 12px}
+
+    /* CARDS */
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 6px 20px rgba(2,6,23,0.6);transition:transform .18s ease,box-shadow .18s ease}
+    .card:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(2,6,23,0.7)}
+    .muted{color:var(--muted);font-size:14px}
+
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+    .kpi{padding:14px;border-radius:10px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02));border:1px solid rgba(255,255,255,0.02)}
+    .kpi h3{margin:0;font-size:13px;color:var(--muted)}
+    .kpi p{margin:8px 0 0;font-weight:700;font-size:18px;color:#fff}
+
+    .chart-wrap{height:260px}
+    canvas{max-width:100%}
+
+    /* Document style for Plan page */
+    .doc{background:linear-gradient(180deg,#071025, #071427);padding:22px;border-radius:12px}
+    .doc h3{margin-top:12px}
+    .doc p, .doc li{line-height:1.5;color:#dbe9ff}
+    .doc ul{margin-left:18px}
+
+    /* SWOT and competitor blocks */
+    .cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.03);font-size:13px;color:var(--muted)}
+
+    /* Toggle */
+    .toggle{display:inline-flex;align-items:center;gap:8px}
+    .switch{width:44px;height:26px;background:rgba(255,255,255,0.06);border-radius:999px;position:relative;padding:3px;cursor:pointer}
+    .knob{width:20px;height:20px;background:white;border-radius:50%;position:absolute;left:3px;top:3px;transition:left .18s}
+    .switch.on{background:linear-gradient(90deg,var(--accent),#06b6d4)}
+    .switch.on .knob{left:21px}
+
+    /* roadmap */
+    .road{display:flex;flex-direction:column;gap:10px}
+    .road .step{display:flex;gap:12px;align-items:flex-start}
+    .dot{width:12px;height:12px;border-radius:50%;background:var(--accent);margin-top:6px}
+
+    @media(max-width:800px){.cols{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+  </style>
+</head>
+<body>
+
+  <header class="nav">
+    <div class="brand">Astra RP — Dashboard</div>
+    <nav style="margin-left:18px">
+      <a href="#plan" class="active">Бизнес-план</a>
+      <a href="#strategy">Стратегия</a>
+      <a href="#finance">Финансы</a>
+    </nav>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:12px">
+      <div class="toggle muted">Показывать прогноз
+        <div id="toggleSwitch" class="switch on"><div class="knob"></div></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- PLAN as document -->
+    <section id="plan" class="page">
+      <h1>Бизнес-План Astra RP — Инвестиционный формат</h1>
+
+      <div class="card doc">
+        <h2>1. Исполнительное резюме</h2>
+        <p>Astra RP — Light RP сервер на RAGE MP. Запуск минимален по затратам: команда работает на энтузиазме, единственная фиксированная статья расходов — хостинг (≈5 000 ₽/мес). Мы предлагаем продукт для широкой аудитории, которая ценит быстрый доступ к RP без долгих рутинных механик. Планируем органический рост и честную монетизацию (косметика, Battle Pass, VIP).</p>
+
+        <h3>Ключевые показатели для инвестора</h3>
+        <ul>
+          <li>Целевой CCU на 6 мес: <strong>120–200</strong></li>
+          <li>Ожидаемая месячная выручка при 120 CCU: <strong>≈30 000 ₽</strong></li>
+          <li>Срок выхода на операционную прибыль: <strong>3–4 месяца</strong></li>
+        </ul>
+
+        <h3>Финансовые потребности</h3>
+        <p>Проект не требует инвестиций для старта. Но для ускоренного роста (адвертайзинг, оплатa подрядчиков) потребуется инвестиция в размере 100–300 тыс ₽, которая покроет маркетинг и доработку бэка.
+        </p>
+      </div>
+
+      <div class="card doc">
+        <h2>2. Анализ конкурентов</h2>
+        <p>На рынке присутствуют крупные RP-проекты с жёсткими правилами и высокий порог входа, а также множество "бонусников". Основные конкурентные преимущества Astra RP:</p>
+        <div class="cols">
+          <div>
+            <h3>Крупные проекты (например: «Большой RP»)</h3>
+            <ul>
+              <li>Плюсы: большая база игроков, стабильность.</li>
+              <li>Минусы: тяжёлый старт для новичков, длительное обучение.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Малые бонусные сервера</h3>
+            <ul>
+              <li>Плюсы: быстрый рост, дешёвый контент.</li>
+              <li>Минусы: недолговечность, агрессивная монетизация.</li>
+            </ul>
+          </div>
+        </div>
+
+        <p>Вывод: Astra RP займёт нишу между — лёгкий RP со стабильной модерацией и честной монетизацией.</p>
+      </div>
+
+      <div class="card doc">
+        <h2>3. SWOT-анализ</h2>
+        <div class="cols">
+          <div>
+            <h3>Сильные стороны</h3>
+            <ul>
+              <li>Низкие операционные расходы</li>
+              <li>Команда на энтузиазме, гибкость</li>
+              <li>Готовая сборка на RAGE MP</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Слабые стороны</h3>
+            <ul>
+              <li>Ограниченные ресурсы для масштабного маркетинга</li>
+              <li>Зависимость от ключевых волонтёров</li>
+            </ul>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:12px">
+          <div>
+            <h3>Возможности</h3>
+            <ul>
+              <li>Наращивание аудитории через короткие видео</li>
+              <li>Партнёрства с микро-стримерами</li>
+              <li>Монетизация через косметику и пассы</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Угрозы</h3>
+            <ul>
+              <li>DDoS и технические сбои</li>
+              <li>Отток игроков к более крупным проектам</li>
+              <li>Непродуманная монетизация</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="card doc">
+        <h2>4. Риски и меры минимизации</h2>
+        <ul>
+          <li><strong>Технические риски:</strong> DDoS, падения. <em>Митигировать</em> — хост с анти-DDoS, регулярные бэкапы, резервный сервер.</li>
+          <li><strong>Человеческие риски:</strong> уход волонтёров. <em>Митигировать</em> — документация, передача знаний, маленькие поощрения.</li>
+          <li><strong>Коммерческие риски:</strong> низкая конверсия. <em>Митигировать</em> — A/B тестирование донат-предложений, гибкая ценовая политика.</li>
+        </ul>
+      </div>
+
+      <div class="card doc">
+        <h2>5. Roadmap (6 месяцев)</h2>
+        <div class="road">
+          <div class="step"><div class="dot"></div><div><strong>Месяц 1:</strong> финальные тесты, ЗБТ (закрытый бета-тест), запуск ежедневных МП.</div></div>
+          <div class="step"><div class="dot"></div><div><strong>Месяц 2:</strong> ввод лёгких RP-систем (паспорт, работы), набор лидеров фракций, настройка экономики.</div></div>
+          <div class="step"><div class="dot"></div><div><strong>Месяц 3:</strong> запуск Battle Pass, кейсов, первые маркет-коллаборации.</div></div>
+          <div class="step"><div class="dot"></div><div><strong>Месяц 4:</strong> расширение контента, сезонное обновление, аналитика удержания.</div></div>
+          <div class="step"><div class="dot"></div><div><strong>Месяц 5-6:</strong> оптимизация монетизации, выход на стабильный онлайн, подготовка к следующему сезону.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STRATEGY -->
+    <section id="strategy" class="page" style="display:none;">
+      <h1>Стратегия Развития Astra RP</h1>
+
+      <div class="card">
+        <h2>Долгосрочное позиционирование</h2>
+        <p>Мы позиционируем Astra RP как комфортную площадку Light RP с высоким внимание к UX, быстрой механике и частыми социальными активностями. Наша цель — удержать игроков качественным контентом и ясной экономикой.</p>
+      </div>
+
+      <div class="card">
+        <h2>Контентная стратегия</h2>
+        <p>Ключевые элементы:</p>
+        <ul>
+          <li>Производство 5–10 коротких роликов/неделя (TikTok/Shorts).</li>
+          <li>Еженедельные мини-обновления (фиксы + 1 косметический предмет).</li>
+          <li>Крупные события раз в 4–8 недель (сезоны, карнавалы, войны фракций).</li>
+          <li>Специальные сценарные RP-ивенты с участием лидеров.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Комьюнити и лидерство</h2>
+        <p>Работа с лидерами — ключ к быстрому запуску. Модель: приглашение лидеров семей с предоставлением временных бонусов и инструментов управления их группой (private channels, leaderboards).</p>
+      </div>
+
+      <div class="card">
+        <h2>KPI и аналитика</h2>
+        <div class="kpi-grid">
+          <div class="kpi"><h3>CCU</h3><p id="kpiCCU">0</p></div>
+          <div class="kpi"><h3>DAU</h3><p id="kpiDAU">0</p></div>
+          <div class="kpi"><h3>Retention 7d</h3><p id="kpiR7">0%</p></div>
+          <div class="kpi"><h3>Conversion</h3><p id="kpiConv">0%</p></div>
+          <div class="kpi"><h3>ARPPU</h3><p id="kpiARPPU">0 ₽</p></div>
+          <div class="kpi"><h3>Burn (мес)</h3><p id="kpiBurn">5 000 ₽</p></div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h3>Глубокая аналитика</h3>
+          <p class="muted">Предлагается внедрить простую систему метрик (Discord engagement, CCU/DAU, конверсия, LTV) и еженедельные отчёты. Уже на M1 следует собрать базовую аналитику,— это позволит оперативно корректировать донат-оферы.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>График роста онлайна и трафика</h2>
+        <div class="chart-wrap"><canvas id="onlineChart"></canvas></div>
+      </div>
+    </section>
+
+    <!-- FINANCE -->
+    <section id="finance" class="page" style="display:none;">
+      <h1>Финансовая модель и прогноз</h1>
+
+      <div class="card">
+        <h2>Фиксированные расходы</h2>
+        <ul>
+          <li>Хостинг: 5 000 ₽ / мес</li>
+          <li>Резерв (непредвид.): 500 ₽ / мес</li>
+          <li>Итого: 5 500 ₽ / мес</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Доходы — реалистичная модель</h2>
+        <p>Модель основана на следующих допущениях:</p>
+        <ul>
+          <li>Средний CCU по месяцам: [30, 60, 90, 120, 140, 160]</li>
+          <li>MAU (активные): CCU * 8</li>
+          <li>Конверсия платящих: 2.5%</li>
+          <li>ARPPU: 350 ₽</li>
+        </ul>
+        <div class="chart-wrap"><canvas id="revenueForecast"></canvas></div>
+      </div>
+
+      <div class="card">
+        <h2>График конверсии и расходы</h2>
+        <div class="grid">
+          <div class="card"><h3>Conversion over time</h3><div class="chart-wrap"><canvas id="conversionForecast"></canvas></div></div>
+          <div class="card"><h3>Expenses breakdown</h3><div class="chart-wrap"><canvas id="expensesForecast"></canvas></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Прогноз прибыли (чистая)</h2>
+        <div class="chart-wrap"><canvas id="netProfit"></canvas></div>
+        <p class="muted">Порог безубыточности ~ при доходе 5 500 ₽/мес — достижим при CCU ≈ 40–50 с текущими допущениями.</p>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Chart.js and logic -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    // Simple page nav
+    const pages = document.querySelectorAll('.page');
+    const navLinks = document.querySelectorAll('header .nav a, header nav a, header nav a');
+    document.querySelectorAll('header nav a').forEach(link=>{
+      link.addEventListener('click', (e)=>{
+        e.preventDefault(); document.querySelectorAll('header nav a').forEach(x=>x.classList.remove('active'));
+        link.classList.add('active'); pages.forEach(p=>p.style.display='none'); const target = link.getAttribute('href'); document.querySelector(target).style.display='block';
+      });
+    });
+
+    // Toggle
+    const toggle = document.getElementById('toggleSwitch');
+    toggle.addEventListener('click', ()=>toggle.classList.toggle('on'));
+
+    // KPI fill
+    const kpiData = {ccu:80,dau:640,r7:28,conv:2.5,arppu:350,burn:5500};
+    document.getElementById('kpiCCU').textContent = kpiData.ccu;
+    document.getElementById('kpiDAU').textContent = kpiData.dau;
+    document.getElementById('kpiR7').textContent = kpiData.r7 + '%';
+    document.getElementById('kpiConv').textContent = kpiData.conv + '%';
+    document.getElementById('kpiARPPU').textContent = kpiData.arppu + ' ₽';
+    document.getElementById('kpiBurn').textContent = kpiData.burn.toLocaleString() + ' ₽';
+
+    // Online forecast
+    const onlineLabels = ['M1','M2','M3','M4','M5','M6'];
+    const onlineData = [30,60,90,120,140,160];
+    const ctxOnline = document.getElementById('onlineChart').getContext('2d');
+    new Chart(ctxOnline, {type:'line',data:{labels:onlineLabels,datasets:[{label:'CCU',data:onlineData,borderColor:'#7c3aed',tension:0.3,fill:true,backgroundColor:'rgba(124,58,237,0.12)'}]},options:{responsive:true,plugins:{legend:{display:false}}}});
+
+    // Revenue forecast based on conversion & ARPPU
+    const conversion = 0.025; const arppu = 350;
+    const revenueData = onlineData.map(ccu=> Math.round(ccu*8 * conversion * arppu)); // MAU=CCU*8
+    const ctxRev = document.getElementById('revenueForecast').getContext('2d');
+    new Chart(ctxRev,{type:'bar',data:{labels:onlineLabels,datasets:[{label:'Доход, ₽',data:revenueData,backgroundColor:'#06b6d4'}]},options:{responsive:true}});
+
+    // Conversion over time (assumed slight growth)
+    const convData = [2.0,2.1,2.3,2.5,2.6,2.7];
+    new Chart(document.getElementById('conversionForecast').getContext('2d'),{type:'line',data:{labels:onlineLabels,datasets:[{label:'Конверсия %',data:convData,borderColor:'#f59e0b',tension:0.3}]},options:{responsive:true,scales:{y:{beginAtZero:true}}}});
+
+    // Expenses breakdown (fixed)
+    new Chart(document.getElementById('expensesForecast').getContext('2d'),{type:'doughnut',data:{labels:['Хостинг','Резерв','Домен'],datasets:[{data:[5000,400,100],backgroundColor:['#7c3aed','#06b6d4','#f97316']}]},options:{responsive:true,plugins:{legend:{position:'bottom'}}}});
+
+    // Net profit = revenue - burn
+    const netProfitData = revenueData.map(r=> r - kpiData.burn);
+    new Chart(document.getElementById('netProfit').getContext('2d'),{type:'line',data:{labels:onlineLabels,datasets:[{label:'Чистая прибыль, ₽',data:netProfitData,borderColor:'#10b981',tension:0.3,fill:true,backgroundColor:'rgba(16,185,129,0.08)'}]},options:{responsive:true}});
+
+    // Revenue chart small (for older layout compatibility)
+    // fallback
+    try{
+      const revenueChart = document.getElementById('revenueChart');
+      if(revenueChart){new Chart(revenueChart.getContext('2d'),{type:'line',data:{labels:onlineLabels,datasets:[{label:'Доход (старый)',data:revenueData,borderColor:'#a78bfa'}]}})}
+    }catch(e){console.warn(e)}
+  </script>
+</body>
+</html>
